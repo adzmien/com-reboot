@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: reboot-audit-service
+  datasource:
+    url: jdbc:mariadb://localhost:3306/uam_audit
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    schemas: uam_audit
+
+server:
+  port: 8084

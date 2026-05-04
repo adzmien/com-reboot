@@ -1,5 +1,7 @@
 # Project Scaffold & Common Library
 
+Status: done 2026-05-05
+
 ## Spec Reference
 
 ISSUE-1 from `docs/specs/spec-reboot-uam.md`
@@ -10,11 +12,11 @@ Initialise the Gradle multi-module project with all 5 service modules (`reboot-a
 
 ## Acceptance Criteria
 
-- [ ] All 5 service modules compile without errors
-- [ ] `reboot-common-lib` is resolvable as a Gradle dependency in all 5 service modules
-- [ ] `ApiResponse<T>`, full exception hierarchy, `@KycSensitive`, and `AuditEvent` are available as importable types in every service
-- [ ] `@RestControllerAdvice` base correctly maps each exception type to its designated HTTP status and `ApiResponse` error format
-- [ ] `OutboxRelay`, `IdempotentConsumer`, and `TokenBlacklist` module skeletons exist with stub interfaces
+- [x] All 5 service modules compile without errors
+- [x] `reboot-common-lib` is resolvable as a Gradle dependency in all 5 service modules
+- [x] `ApiResponse<T>`, full exception hierarchy, `@KycSensitive`, and `AuditEvent` are available as importable types in every service
+- [x] `@RestControllerAdvice` base correctly maps each exception type to its designated HTTP status and `ApiResponse` error format
+- [x] `OutboxRelay`, `IdempotentConsumer`, and `TokenBlacklist` module skeletons exist with stub interfaces
 
 ## Blocked by
 

@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: reboot-uam-service
+  datasource:
+    url: jdbc:mariadb://localhost:3306/uam_core
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    schemas: uam_core
+
+server:
+  port: 8081

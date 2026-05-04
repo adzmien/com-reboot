@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: reboot-gateway
+  cloud:
+    gateway:
+      routes: []
+
+server:
+  port: 8080
