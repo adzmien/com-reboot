@@ -1,0 +1,56 @@
+plugins {
+    id 'org.springframework.boot' version '3.3.5' apply false
+    id 'io.spring.dependency-management' version '1.1.6' apply false
+}
+
+group = 'com.reboot'
+version = '0.0.1-SNAPSHOT'
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    group = rootProject.group
+    version = rootProject.version
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:3.3.5"
+        }
+    }
+
+    configurations.configureEach {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.mapstruct') {
+                details.useVersion '1.5.5.Final'
+            }
+        }
+    }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testCompileOnly 'org.projectlombok:lombok'
+        testAnnotationProcessor 'org.projectlombok:lombok'
+
+        compileOnly 'org.mapstruct:mapstruct:1.5.5.Final'
+        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+        annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += [
+            '-Amapstruct.defaultComponentModel=spring',
+            '-Amapstruct.unmappedTargetPolicy=IGNORE'
+        ]
+    }
+}
