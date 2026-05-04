@@ -6,7 +6,7 @@ ISSUE-2 from `docs/specs/spec-reboot-uam.md`
 
 ## What to build
 
-Configure the shared test infrastructure used by every subsequent issue. Singleton Testcontainers configs for MariaDB, Kafka, and Redis (one container instance per test run, not per test). `AbstractIntegrationTest` JUnit 5 base class pre-wired to all three containers. MockMvc base class with pre-configured `ObjectMapper`. Embedded Kafka consumer test utility with a synchronous poll helper. Docker Compose file for local dev that starts all infrastructure and all 5 services.
+Configure the shared test infrastructure used by every subsequent issue. Singleton Testcontainers configs for MariaDB, Kafka, and Redis (one container instance per test run, not per test). `AbstractIntegrationTest` JUnit 5 base class pre-wired to all three containers. MockMvc base class with pre-configured `ObjectMapper`. Embedded Kafka consumer test utility with a synchronous poll helper. Kubernetes manifests under `k8s/` (Deployments, Services, ConfigMaps, Secrets) for all infrastructure and all 5 services, targeting a local kind/minikube cluster.
 
 ## Acceptance Criteria
 
@@ -14,7 +14,7 @@ Configure the shared test infrastructure used by every subsequent issue. Singlet
 - [ ] An integration test can publish a message to an embedded Kafka topic and assert it is consumable via the synchronous poll helper
 - [ ] An integration test can read from and write to the Redis container
 - [ ] A sample `@SpringBootTest` in each of the 5 services passes using the shared test harness
-- [ ] `docker compose up` starts all infrastructure; each service reaches `/actuator/health` = `UP`
+- [ ] `kubectl apply -f k8s/` on a local kind/minikube cluster starts all infrastructure; each service reaches `/actuator/health` = `UP`
 
 ## Blocked by
 

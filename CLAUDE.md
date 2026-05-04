@@ -6,12 +6,17 @@ Reboot-UAM — reusable User Access Management microservices system (company: Re
 ---
 
 ## Prerequisites
-Run `j21` before any `./gradlew` command to set `JAVA_HOME` to Java 21.
+Run `j21` before any command that invokes Java (`./gradlew`, `java`, `javac`, etc.) to set `JAVA_HOME` to Java 21.
 
 ---
 
 ## Tech Stack
 Java 21 · Spring Boot 3.3.x · Gradle (Groovy) · Lombok · MapStruct · Spring Cloud Gateway · OpenFeign · Resilience4j · Kafka · MariaDB (single instance, schema-per-service) · Flyway · Micrometer + OpenTelemetry + Prometheus + Grafana + Tempo · Kubernetes · K8s DNS · ConfigMaps + Secrets
+
+## Local Dev Environment
+- **Runtime:** Kubernetes only (kind or minikube). **No Docker Compose** — never create or suggest `docker-compose.yml`.
+- All services and infrastructure (MariaDB, Kafka, Redis) are deployed via k8s manifests (`Deployment`, `Service`, `ConfigMap`, `Secret`).
+- Local dev parity: `kubectl apply -f k8s/` brings up full stack; each service must reach `/actuator/health = UP`.
 
 ---
 

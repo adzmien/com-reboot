@@ -2,7 +2,7 @@
 
 | ID  | Title                                                   | Type | Status | Spec     | Blocked by         | File                                                              |
 | --- | ------------------------------------------------------- | ---- | ------ | -------- | ------------------ | ----------------------------------------------------------------- |
-| #1  | Project Scaffold & Common Library                       | AFK  | in-progress | ISSUE-1  | —                  | `1-project-scaffold-and-common-library.md`                        |
+| #1  | Project Scaffold & Common Library                       | AFK  | done        | ISSUE-1  | —                  | `1-project-scaffold-and-common-library.md`                        |
 | #2  | Test Harness & Local Dev Environment                    | AFK  | open   | ISSUE-2  | #1                 | `2-test-harness-and-local-dev-environment.md`                     |
 | #3  | Login, JWT Issuance & Token Refresh                     | AFK  | open   | ISSUE-3  | #2                 | `3-login-jwt-issuance-and-token-refresh.md`                       |
 | #4  | Logout & Redis Token Blacklist                          | AFK  | open   | ISSUE-4  | #3                 | `4-logout-and-redis-token-blacklist.md`                           |

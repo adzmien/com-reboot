@@ -480,7 +480,7 @@ flowchart LR
 | # | Task | Complexity | Mandays | Risk | Covers |
 |---|---|---|---|---|---|
 | 1 | Gradle multi-module project setup (5 services + common-lib). `reboot-common-lib`: `ApiResponse<T>`, exception hierarchy (`RebootException` → `ResourceNotFoundException`, `DuplicateResourceException`, `BusinessRuleException`, `UnauthorizedException`, `ForbiddenException`, `ServiceCommunicationException`), `@KycSensitive` annotation, `AuditEvent` envelope, shared JWT security filter, `@RestControllerAdvice` base. | Medium | 4 | Low | Foundation |
-| 2 | Test harness: Testcontainers base configs (MariaDB, Kafka, Redis), `AbstractIntegrationTest` base class, MockMvc base class, embedded Kafka consumer test utilities, Docker Compose for local dev environment. | Medium | 4 | Low | Foundation |
+| 2 | Test harness: Testcontainers base configs (MariaDB, Kafka, Redis), `AbstractIntegrationTest` base class, MockMvc base class, embedded Kafka consumer test utilities, Kubernetes manifests (`k8s/`) for local dev environment (kind/minikube). | Medium | 4 | Low | Foundation |
 
 **Slice 0 Subtotal: 8 mandays**
 
@@ -594,7 +594,7 @@ flowchart LR
 
 | # | Task | Complexity | Mandays | Risk | Covers |
 |---|---|---|---|---|---|
-| 17 | Micrometer + OpenTelemetry: trace/span propagation across HTTP and Kafka headers. MDC `traceId` + `spanId` in all log statements. Prometheus scrape endpoint. Grafana + Tempo datasource config in Docker Compose. | Medium | 4 | Low | Foundation |
+| 17 | Micrometer + OpenTelemetry: trace/span propagation across HTTP and Kafka headers. MDC `traceId` + `spanId` in all log statements. Prometheus scrape endpoint. Grafana + Tempo datasource config as Kubernetes ConfigMaps (local kind/minikube). | Medium | 4 | Low | Foundation |
 | 18 | Resilience4j circuit breaker on `auth-service → uam-service` Feign call (fallback: `ServiceCommunicationException` → 502). Kubernetes manifests: `Deployment`, `Service`, `ConfigMap`, `Secret` for all 5 services. K8s DNS service discovery. | Medium | 4 | Low | Foundation |
 
 **Slice 9 Subtotal: 8 mandays**
@@ -675,15 +675,15 @@ flowchart LR
 
 #### ISSUE-2: Test Harness & Local Dev Environment
 
-- **Description:** Configure shared test infrastructure: Testcontainers base configs for MariaDB, Kafka, and Redis (singleton containers per test run). `AbstractIntegrationTest` base class. MockMvc base class with pre-configured `ObjectMapper`. Embedded Kafka consumer test utilities (synchronous poll helper). Docker Compose file for local dev.
+- **Description:** Configure shared test infrastructure: Testcontainers base configs for MariaDB, Kafka, and Redis (singleton containers per test run). `AbstractIntegrationTest` base class. MockMvc base class with pre-configured `ObjectMapper`. Embedded Kafka consumer test utilities (synchronous poll helper). Kubernetes manifests (`k8s/` directory) for local dev using kind/minikube — `Deployment`, `Service`, `ConfigMap`, and `Secret` for all infrastructure and all 5 services.
 - **User Stories:** Foundation for all US
 - **Modules touched:** Foundation test infrastructure — pre-module
-- **Public Interface:** `AbstractIntegrationTest` (JUnit 5 extension), Docker Compose
+- **Public Interface:** `AbstractIntegrationTest` (JUnit 5 extension), `k8s/` manifests
 - **Behaviors to verify (in priority order):**
   1. An integration test extending `AbstractIntegrationTest` can write to and read from the MariaDB container
   2. An integration test can publish a message to an embedded Kafka topic and assert it is consumable
   3. An integration test can read from and write to the Redis container
-  4. `docker compose up` starts all infrastructure; all 5 services reach `/actuator/health` = UP
+  4. `kubectl apply -f k8s/` on a local kind/minikube cluster starts all infrastructure; all 5 services reach `/actuator/health` = UP
 - **Acceptance Criteria:** All integration test base classes compile. A sample `@SpringBootTest` in each service passes using the shared test harness.
 - **Estimated Mandays:** 4
 - **Dependencies:** ISSUE-1
@@ -1001,7 +1001,7 @@ flowchart LR
 
 #### ISSUE-17: Distributed Tracing & Structured Logging
 
-- **Description:** Add Micrometer + OpenTelemetry to all services. Configure trace/span propagation via HTTP headers (`traceparent`) and Kafka record headers. MDC enrichment: `traceId`, `spanId` in all log statements. Prometheus scrape endpoint (`/actuator/prometheus`). Grafana + Tempo datasource config in Docker Compose.
+- **Description:** Add Micrometer + OpenTelemetry to all services. Configure trace/span propagation via HTTP headers (`traceparent`) and Kafka record headers. MDC enrichment: `traceId`, `spanId` in all log statements. Prometheus scrape endpoint (`/actuator/prometheus`). Grafana + Tempo datasource config as Kubernetes ConfigMaps deployed to local kind/minikube cluster.
 - **User Stories:** Foundation
 - **Modules touched:** Cross-cutting — all modules
 - **Public Interface:** `/actuator/prometheus`, `/actuator/health`
@@ -1009,7 +1009,7 @@ flowchart LR
   1. A login request generates a trace visible across gateway → auth-service → uam-service (same `traceId` in logs of all three services)
   2. `/actuator/prometheus` on each service returns HTTP request counters
   3. `/actuator/health` returns `UP` for each service
-- **Acceptance Criteria:** Trace propagation verified manually via Docker Compose + Grafana/Tempo local stack.
+- **Acceptance Criteria:** Trace propagation verified manually via Grafana/Tempo deployed on local kind/minikube cluster.
 - **Estimated Mandays:** 4
 - **Dependencies:** All previous slices
 - **Risk:** Low
