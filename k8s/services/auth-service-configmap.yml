@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+  namespace: reboot-uam
+data:
+  SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb.reboot-uam.svc.cluster.local:3306/uam_auth
+  SPRING_DATASOURCE_USERNAME: auth_user
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka.reboot-uam.svc.cluster.local:9092
+  SPRING_DATA_REDIS_HOST: redis.reboot-uam.svc.cluster.local
+  SPRING_DATA_REDIS_PORT: "6379"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health

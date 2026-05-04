@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-service
+  namespace: reboot-uam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workflow-service
+  template:
+    metadata:
+      labels:
+        app: workflow-service
+    spec:
+      containers:
+        - name: workflow-service
+          image: reboot/workflow-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: workflow-service-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: workflow-password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10

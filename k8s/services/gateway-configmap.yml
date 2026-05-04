@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: reboot-uam
+data:
+  SPRING_CLOUD_GATEWAY_ROUTES_0_ID: uam-service
+  SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://uam-service.reboot-uam.svc.cluster.local:8081
+  SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: Path=/api/users/**
+  SPRING_CLOUD_GATEWAY_ROUTES_1_ID: auth-service
+  SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://auth-service.reboot-uam.svc.cluster.local:8082
+  SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: Path=/api/auth/**
+  SPRING_CLOUD_GATEWAY_ROUTES_2_ID: workflow-service
+  SPRING_CLOUD_GATEWAY_ROUTES_2_URI: http://workflow-service.reboot-uam.svc.cluster.local:8083
+  SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: Path=/api/workflows/**
+  SPRING_CLOUD_GATEWAY_ROUTES_3_ID: audit-service
+  SPRING_CLOUD_GATEWAY_ROUTES_3_URI: http://audit-service.reboot-uam.svc.cluster.local:8084
+  SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0: Path=/api/audit/**
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+  namespace: reboot-uam
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS uam_core CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS uam_auth CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS uam_workflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS uam_audit CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE USER IF NOT EXISTS 'uam_user'@'%' IDENTIFIED BY 'reboot-uam';
+    GRANT ALL PRIVILEGES ON uam_core.* TO 'uam_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'auth_user'@'%' IDENTIFIED BY 'reboot-auth';
+    GRANT ALL PRIVILEGES ON uam_auth.* TO 'auth_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'workflow_user'@'%' IDENTIFIED BY 'reboot-workflow';
+    GRANT ALL PRIVILEGES ON uam_workflow.* TO 'workflow_user'@'%';
+
+    CREATE USER IF NOT EXISTS 'audit_user'@'%' IDENTIFIED BY 'reboot-audit';
+    GRANT ALL PRIVILEGES ON uam_audit.* TO 'audit_user'@'%';
+
+    FLUSH PRIVILEGES;

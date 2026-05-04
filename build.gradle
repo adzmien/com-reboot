@@ -53,4 +53,19 @@ subprojects {
             '-Amapstruct.unmappedTargetPolicy=IGNORE'
         ]
     }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        // Exclude Testcontainers integration tests from the default test task.
+        // Run them separately with: ./gradlew integrationTest (requires Docker).
+        exclude '**/*IT.class'
+    }
+
+    tasks.register('integrationTest', Test) {
+        description = 'Runs Testcontainers integration tests (requires Docker).'
+        group = 'verification'
+        useJUnitPlatform()
+        include '**/*IT.class'
+        shouldRunAfter tasks.named('test')
+    }
 }

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: reboot-uam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: root-password
+          volumeMounts:
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command:
+                - mariadb-admin
+                - ping
+                - -h
+                - localhost
+                - -uroot
+                - -preboot-root
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 10
+      volumes:
+        - name: init-sql
+          configMap:
+            name: mariadb-config
+            items:
+              - key: init.sql
+                path: init.sql

@@ -1,0 +1,15 @@
+spring:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  security:
+    user:
+      password: test
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

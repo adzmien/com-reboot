@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uam-service
+  namespace: reboot-uam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uam-service
+  template:
+    metadata:
+      labels:
+        app: uam-service
+    spec:
+      containers:
+        - name: uam-service
+          image: reboot/uam-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: uam-service-config
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-secret
+                  key: uam-password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
