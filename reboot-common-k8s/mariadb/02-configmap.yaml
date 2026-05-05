@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+  namespace: reboot-infra
+data:
+  my.cnf: |
+    [mysqld]
+    max_connections = 300
+    innodb_buffer_pool_size = 256M
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS uam_core;
+    CREATE SCHEMA IF NOT EXISTS uam_auth;
+    GRANT ALL PRIVILEGES ON uam_core.* TO 'rebootuser'@'%';
+    GRANT ALL PRIVILEGES ON uam_auth.* TO 'rebootuser'@'%';
+    FLUSH PRIVILEGES;

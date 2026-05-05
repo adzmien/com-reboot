@@ -24,10 +24,10 @@ Infra manifests live in `reboot-common-k8s/`. Apply with `kubectl apply -f reboo
 
 | Component        | Host            | NodePort | Internal | Notes          |
 |------------------|-----------------|----------|----------|----------------|
-| MariaDB          | `${INFRA_HOST}` | `30309`  | `3306`   |                |
-| Kafka broker     | `${INFRA_HOST}` | `32480`  | `9092`   | client traffic |
+| MariaDB          | `${INFRA_HOST}` | `30306`  | `3306`   |                |
+| Kafka broker     | `${INFRA_HOST}` | `30092`  | `9092`   | client traffic |
 | Kafka controller | `${INFRA_HOST}` | `30391`  | `9093`   | KRaft          |
-| Redis            | `${INFRA_HOST}` | `30380`  | `6379`   |                |
+| Redis            | `${INFRA_HOST}` | `30379`  | `6379`   |                |
 
 ## Tech Stack
 Java 21 · Spring Boot 3.3.x · Gradle (Groovy) · Lombok · MapStruct · Spring Cloud Gateway · OpenFeign · Resilience4j · Kafka · MariaDB (single instance, schema-per-service) · Flyway · Micrometer + OpenTelemetry + Prometheus + Grafana + Tempo · Kubernetes (infra only) · ConfigMaps + Secrets
@@ -79,7 +79,7 @@ Package layout (Java): feature-first, then layer. E.g. `com.reboot.uam.api.user.
 - One subdirectory per component: `mariadb/`, `kafka/`, `redis/`, etc. Each contains its own `Deployment`/`StatefulSet`, `Service`, `ConfigMap`, `Secret`.
 - Resource names match the directory: `metadata.name: mariadb`, `metadata.name: kafka`, etc.
 - All resources in namespace `reboot-infra` (create via `00-namespace.yaml` if absent).
-- Secrets stay out of git — commit `*-secret.example.yaml` placeholders only; real secrets applied manually or via sealed-secrets.
+- Secrets: for learning, credentials are committed directly in `*-secret.yaml` files with a `# FOR LEARNING ONLY` comment. Never do this in production.
 - NodePorts only for components that services connect to from outside the cluster (the four in the Local Dev Model table). Internal-only components use `ClusterIP`.
 
 ## Database

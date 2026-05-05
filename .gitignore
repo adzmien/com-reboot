@@ -9,3 +9,5 @@ build/
 *.iws
 out/
 .DS_Store
+.env
+.claude/memory/
