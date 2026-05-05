@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: approved
 version: 1.0
 author: adzmien
 created: 2026-05-05
