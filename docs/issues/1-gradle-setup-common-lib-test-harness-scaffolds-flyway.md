@@ -1,6 +1,6 @@
 # Issue #1 — Gradle setup, common-lib, test harness, scaffolds, and Flyway
 
-Status: in-progress 2026-05-06
+Status: done 2026-05-07
 
 ## Spec Reference
 

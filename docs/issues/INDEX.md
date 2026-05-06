@@ -2,7 +2,7 @@
 
 | ID  | Title                                                              | Type | Status | Spec              | Blocked by | File                                                                          |
 | --- | ------------------------------------------------------------------ | ---- | ------ | ----------------- | ---------- | ----------------------------------------------------------------------------- |
-| #1  | Gradle setup, common-lib, test harness, scaffolds, and Flyway      | AFK  | in-progress | ISSUE-1, ISSUE-2  | —          | `1-gradle-setup-common-lib-test-harness-scaffolds-flyway.md`                  |
+| #1  | Gradle setup, common-lib, test harness, scaffolds, and Flyway      | AFK  | done        | ISSUE-1, ISSUE-2  | —          | `1-gradle-setup-common-lib-test-harness-scaffolds-flyway.md`                  |
 | #2  | Login, logout, token refresh, and account lockout                  | AFK  | open   | ISSUE-3           | #1         | `2-login-logout-token-refresh-account-lockout.md`                             |
 | #3  | API Gateway — JWT validation, RBAC, Circuit Breaker, Correlation ID | AFK  | open   | ISSUE-4           | #2         | `3-api-gateway-jwt-rbac-circuit-breaker-correlation-id.md`                    |
 | #4  | Internal user CRUD, role assignment, and account deactivation      | AFK  | open   | ISSUE-5           | #3         | `4-internal-user-crud-role-assignment-deactivation.md`                        |
