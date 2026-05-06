@@ -1,0 +1,29 @@
+plugins {
+    id 'java-library'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    // Spring Web / MVC types used by ApiResponse and BaseRestControllerAdvice.
+    // spring-web provides HttpStatus, ResponseEntity.
+    // spring-webmvc provides @RestControllerAdvice, @ExceptionHandler.
+    // These are declared as 'api' so service modules that use the annotations can compile.
+    // The Gateway is WebFlux and does NOT use BaseRestControllerAdvice, so no conflict.
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Logging
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+
+    // Test fixtures dependencies
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testFixturesImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testFixturesImplementation 'org.springframework.kafka:spring-kafka-test'
+    testFixturesImplementation 'org.springframework.kafka:spring-kafka'
+    testFixturesImplementation "org.projectlombok:lombok:${lombokVersion}"
+    testFixturesAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testFixturesCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+
+    // Unit test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

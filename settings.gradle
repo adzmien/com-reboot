@@ -1,0 +1,9 @@
+rootProject.name = 'reboot-uam'
+
+include 'reboot-common-lib'
+include 'reboot-auth-service'
+include 'reboot-uam-service'
+include 'reboot-gateway'
+include 'reboot-workflow-service'
+include 'reboot-audit-service'
+include 'reboot-query-service'

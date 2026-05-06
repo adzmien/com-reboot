@@ -1,3 +1,7 @@
+# Issue #1 — Gradle setup, common-lib, test harness, scaffolds, and Flyway
+
+Status: done 2026-05-07
+
 ## Spec Reference
 
 ISSUE-1 and ISSUE-2 from `docs/specs/spec-reboot-uam.md`
