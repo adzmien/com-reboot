@@ -3,7 +3,10 @@ plugins {
 }
 
 dependencies {
-    implementation project(':reboot-common-lib')
+    implementation(project(':reboot-common-lib')) {
+        // common-lib exposes spring-boot-starter-web (MVC) via api; Gateway requires WebFlux only
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-web'
+    }
 
     // Spring Cloud Gateway uses WebFlux (reactive) — no spring-boot-starter-web
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
