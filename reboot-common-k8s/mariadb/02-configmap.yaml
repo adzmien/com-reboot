@@ -9,8 +9,14 @@ data:
     max_connections = 300
     innodb_buffer_pool_size = 256M
   init.sql: |
-    CREATE SCHEMA IF NOT EXISTS uam_core;
     CREATE SCHEMA IF NOT EXISTS uam_auth;
-    GRANT ALL PRIVILEGES ON uam_core.* TO 'rebootuser'@'%';
-    GRANT ALL PRIVILEGES ON uam_auth.* TO 'rebootuser'@'%';
+    CREATE SCHEMA IF NOT EXISTS uam_core;
+    CREATE SCHEMA IF NOT EXISTS uam_workflow;
+    CREATE SCHEMA IF NOT EXISTS uam_audit;
+    CREATE SCHEMA IF NOT EXISTS uam_query;
+    GRANT ALL PRIVILEGES ON uam_auth.*     TO 'rebootuser'@'%';
+    GRANT ALL PRIVILEGES ON uam_core.*     TO 'rebootuser'@'%';
+    GRANT ALL PRIVILEGES ON uam_workflow.* TO 'rebootuser'@'%';
+    GRANT ALL PRIVILEGES ON uam_audit.*    TO 'rebootuser'@'%';
+    GRANT ALL PRIVILEGES ON uam_query.*    TO 'rebootuser'@'%';
     FLUSH PRIVILEGES;
