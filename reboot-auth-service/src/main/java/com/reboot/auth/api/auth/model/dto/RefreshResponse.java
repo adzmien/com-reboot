@@ -1,5 +1,7 @@
 package com.reboot.auth.api.auth.model.dto;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,6 +10,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class RefreshResponse {
 
     private final String accessToken;

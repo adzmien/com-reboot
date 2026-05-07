@@ -14,6 +14,7 @@ Reboot-UAM — reusable User Access Management microservices system. Self-contai
 4. **`application.properties`, never YAML** for Spring config. (K8s manifests in `reboot-common-k8s/` are YAML — that's the only allowed YAML in this repo.)
 5. **Never auto-create Notion pages.** `/spec` and `/doc` only write to URLs I provide.
 6. **Never log secrets or PII.** No passwords, tokens, JWTs, or full request bodies.
+7. **No Docker anywhere — including tests.** There is no local Docker daemon. Never use Testcontainers, Docker Compose, or any container runtime in tests. Integration tests (`*IT.java`) connect to the same remote K8s infra (MariaDB NodePort 30306, Redis NodePort 30379) that services use at runtime. Use `@BeforeEach` / `@AfterEach` to clean up state between tests.
 
 ## Local Dev Model
 Services run locally from VSCode via `./gradlew bootRun` (after `j21`). They connect to remote K8s infra over NodePorts. There is no local Docker, no Compose, no service deployment.
@@ -89,7 +90,7 @@ Schemas: `uam_core`, `uam_auth` (all `uam_`-prefixed). Tables: `snake_case`, plu
 `@Slf4j`. Structured: `log.info("User created. userId={}, email={}", id, email)`. Correlation via Micrometer trace/span IDs. ERROR = unexpected · WARN = recoverable/fallback · INFO = business events · DEBUG = method entry/exit, payloads. No repository-level logging.
 
 ## Testing
-Unit (`*Test.java`, JUnit 5 + Mockito) · Integration (`*IT.java`, `@SpringBootTest` + Testcontainers MariaDB) · Contract (MockMvc per REST endpoint) · Inter-service (WireMock for Feign / circuit breakers). Quality over coverage metrics.
+Unit (`*Test.java`, JUnit 5 + Mockito) · Integration (`*IT.java`, `@SpringBootTest` + remote K8s infra via NodePorts) · Contract (MockMvc per REST endpoint) · Inter-service (WireMock for Feign / circuit breakers). Quality over coverage metrics. No Testcontainers — see Hard Rule #7.
 
 ## Design Patterns (general)
 Apply GoF / enterprise patterns where they simplify. Name the pattern in a comment when introducing it. Do not force patterns where a simple `if/else` suffices.

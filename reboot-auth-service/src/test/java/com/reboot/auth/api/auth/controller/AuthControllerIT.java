@@ -2,78 +2,70 @@ package com.reboot.auth.api.auth.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.redis.testcontainers.RedisContainer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-
-import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * End-to-end integration tests for all auth endpoints.
- * Uses Testcontainers MariaDB (with Flyway migrations) and Redis.
- * Does NOT extend BaseIntegrationTest — Flyway must run here.
- * Skipped automatically when Docker daemon is not running.
+ * Connects to the remote K8s MariaDB (NodePort 30306) and Redis (NodePort 30379).
+ * Flyway runs on startup so the internal_users table and admin seed are present.
+ * Each test resets the admin lockout state in Redis and DB via @BeforeEach.
  */
-@EnabledIf("dockerAvailable")
-@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class AuthControllerIT {
 
-    static boolean dockerAvailable() {
-        return new File("/var/run/docker.sock").exists();
-    }
-
-    @Container
-    static final MariaDBContainer<?> MARIADB =
-            new MariaDBContainer<>(DockerImageName.parse("mariadb:10.11"))
-                    .withDatabaseName("uam_auth")
-                    .withUsername("testuser")
-                    .withPassword("testpass");
-
-    @Container
-    static final RedisContainer REDIS =
-            new RedisContainer(DockerImageName.parse("redis:7-alpine"));
-
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", MARIADB::getJdbcUrl);
-        registry.add("spring.datasource.username", MARIADB::getUsername);
-        registry.add("spring.datasource.password", MARIADB::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.mariadb.jdbc.Driver");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-        registry.add("spring.flyway.enabled", () -> "true");
-        registry.add("spring.data.redis.host", REDIS::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379).toString());
-        // Disable Kafka auto-connect in tests
+        // Pin credentials explicitly — local env vars would otherwise shadow the K8s defaults
+        registry.add("spring.datasource.username", () -> "rebootuser");
+        registry.add("spring.datasource.password", () -> "abc@123");
+        registry.add("spring.data.redis.password", () -> "abc@123");
+        // Kafka is not needed for auth flow; skip auto-configuration to avoid connection errors
         registry.add("spring.autoconfigure.exclude",
                 () -> "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration");
     }
 
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired StringRedisTemplate redisTemplate;
+    @Autowired JdbcTemplate jdbcTemplate;
 
-    private static final String ADMIN_EMAIL = "admin@reboot.local";
+    private static final String ADMIN_EMAIL    = "admin@reboot.local";
     private static final String ADMIN_PASSWORD = "Admin@2024!";
-    private static final String LOGIN_URL = "/auth/login";
-    private static final String LOGOUT_URL = "/auth/logout";
-    private static final String REFRESH_URL = "/auth/refresh";
+    private static final String LOGIN_URL      = "/auth/login";
+    private static final String LOGOUT_URL     = "/auth/logout";
+    private static final String REFRESH_URL    = "/auth/refresh";
+
+    private Long adminId;
+
+    @BeforeEach
+    void resetAdminLockoutState() {
+        adminId = jdbcTemplate.queryForObject(
+                "SELECT id FROM internal_users WHERE email = ?", Long.class, ADMIN_EMAIL);
+        // Clear Redis lockout keys so each test starts with a clean slate
+        redisTemplate.delete("login:attempts:" + adminId);
+        redisTemplate.delete("login:locked:" + adminId);
+        // Reset DB lockout columns
+        jdbcTemplate.update(
+                "UPDATE internal_users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?",
+                adminId);
+    }
 
     // ── AC-1: valid credentials return 200 with tokens ──────────────────────
 
@@ -93,7 +85,7 @@ class AuthControllerIT {
         assertThat(data.get("refresh_token").asText()).isNotBlank();
     }
 
-    // ── AC-2: invalid password returns 401 (same as unknown email) ──────────
+    // ── AC-2: invalid password/unknown email both return 401 AUTH-002 ────────
 
     @Test
     void ac2_wrongPassword_returns401() throws Exception {
@@ -114,41 +106,31 @@ class AuthControllerIT {
                 .andExpect(jsonPath("$.errorCode").value("AUTH-002"));
     }
 
-    // ── AC-3: after N failed attempts account is locked → 423 ───────────────
+    // ── AC-3: after N failed attempts account is locked → 423 AUTH-001 ───────
 
     @Test
     void ac3_afterMaxFailedAttempts_returns423() throws Exception {
-        String email = ADMIN_EMAIL;
-        // Exhaust the lockout counter (default 5 attempts)
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post(LOGIN_URL)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(loginBody(email, "bad-pass")))
-                    .andReturn();
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(loginBody(ADMIN_EMAIL, "bad-pass")));
         }
-        // Next attempt (wrong password) must return 423 or 401 depending on whether
-        // the 5th attempt itself triggered the lock
         mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody(email, "bad-pass")))
+                        .content(loginBody(ADMIN_EMAIL, "bad-pass")))
                 .andExpect(status().isLocked())
                 .andExpect(jsonPath("$.errorCode").value("AUTH-001"));
     }
 
     // ── AC-4: locked account returns 423 even with correct password ──────────
-    // NOTE: This test shares state with ac3; run order matters — both hit the
-    // same seeded admin. In isolation this is a separate test class concern.
-    // We use a dedicated helper that explicitly reaches lock state first.
 
     @Test
     void ac4_lockedAccount_correctPasswordStillReturns423() throws Exception {
-        // First lock the account via repeated failures
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(post(LOGIN_URL)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(loginBody(ADMIN_EMAIL, "bad")));
+                    .content(loginBody(ADMIN_EMAIL, "bad-pass")));
         }
-        // Correct password must still return 423
         mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody(ADMIN_EMAIL, ADMIN_PASSWORD)))
@@ -160,27 +142,25 @@ class AuthControllerIT {
 
     @Test
     void ac5_successfulLogin_resetsCounter() throws Exception {
-        // 4 failures (below threshold)
         for (int i = 0; i < 4; i++) {
             mockMvc.perform(post(LOGIN_URL)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(loginBody(ADMIN_EMAIL, "bad")));
+                    .content(loginBody(ADMIN_EMAIL, "bad-pass")));
         }
-        // One successful login
         mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody(ADMIN_EMAIL, ADMIN_PASSWORD)))
                 .andExpect(status().isOk());
 
-        // One more failure — should return 401, not 423 (counter was reset)
+        // One failure after reset — must return 401, not 423
         mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody(ADMIN_EMAIL, "bad")))
+                        .content(loginBody(ADMIN_EMAIL, "bad-pass")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value("AUTH-002"));
     }
 
-    // ── AC-6: logout revokes token, refresh then returns 401 ─────────────────
+    // ── AC-6: logout revokes token; same token then returns 401 on refresh ───
 
     @Test
     void ac6_logoutThenRefresh_returns401() throws Exception {
@@ -222,19 +202,17 @@ class AuthControllerIT {
                 .andExpect(jsonPath("$.errorCode").value("AUTH-003"));
     }
 
-    // ── AC-9: force_password_change flag included when true ──────────────────
+    // ── AC-9: force_password_change flag present on first login ──────────────
 
     @Test
-    void ac9_firstLogin_forcePasswordChangeIncluded() throws Exception {
-        // The seeded admin has force_password_change = TRUE
+    void ac9_firstLogin_forcePasswordChangeFlagIsTrue() throws Exception {
         MvcResult result = mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody(ADMIN_EMAIL, ADMIN_PASSWORD)))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        JsonNode data = parseData(result);
-        assertThat(data.path("force_password_change").asBoolean(false)).isTrue();
+        assertThat(parseData(result).path("force_password_change").asBoolean(false)).isTrue();
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -253,7 +231,6 @@ class AuthControllerIT {
     }
 
     private JsonNode parseData(MvcResult result) throws Exception {
-        String json = result.getResponse().getContentAsString();
-        return objectMapper.readTree(json).path("data");
+        return objectMapper.readTree(result.getResponse().getContentAsString()).path("data");
     }
 }
