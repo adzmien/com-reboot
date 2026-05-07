@@ -1,3 +1,5 @@
+Status: in-progress 2026-05-07
+
 ## Spec Reference
 
 ISSUE-3 from `docs/specs/spec-reboot-uam.md`

@@ -21,8 +21,7 @@ public abstract class BaseIntegrationTest {
 
     @DynamicPropertySource
     static void configureTest(DynamicPropertyRegistry registry) {
-        // Override credentials explicitly so local DB_USERNAME/DB_PASSWORD env vars (set for
-        // other projects) cannot shadow the K8s infra credentials.
+        // Pin credentials so any local REBOOT_DB_* env vars don't shadow the K8s defaults.
         registry.add("spring.datasource.username", () -> "rebootuser");
         registry.add("spring.datasource.password", () -> "abc@123");
         // Disable Flyway — tests manage their own tables directly
